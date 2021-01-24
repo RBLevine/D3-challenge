@@ -23,7 +23,7 @@ var chartGroup = svg.append("g")
     .attr("transform", `translate(${margins.left}, ${margins.top})`);
 
 // Read CSV data
-d3.csv("assets/data.data.csv").then(function(dataHealth){
+d3.csv("assets/data/data.csv").then(function(dataHealth){
     dataHealth.forEach(function(data){
 
         data.healthcare = +data.healthcare;
@@ -33,15 +33,15 @@ d3.csv("assets/data.data.csv").then(function(dataHealth){
 
     // Scale calculations
     var xScale = d3.scaleLinear()
-        .domain(d3.extent(dataHealths, d => d.poverty))
+        .domain([8, d3.max(dataHealth, d => parseInt(d.poverty))])
         .range([0,width]);
     var yScale = d3.scaleLinear()
-        .domain(d3.extents(dataHealth, d => d.healthcare))
-        .range([height, 0]);
+        .domain([2, d3.max(dataHealth, d => parseInt(d.healthcare))])
+        .range([height,0]);
     
     // Create axes
     var bottomAxis = d3.axisBottom(xScale);
-    var leftAxid = d3.axisLeft(yScale);
+    var leftAxis = d3.axisLeft(yScale);
 
     // Append the axes
     chartGroup.append("g")
@@ -69,9 +69,9 @@ d3.csv("assets/data.data.csv").then(function(dataHealth){
         .enter()
         .append("text")
         .attr("class","stateText")
-        .attr("x" d => xScale(d.poverty))
-        .attr("y", d => yScale(d.healthcare))
-        .attr("font-size", 10)
+        .attr("x", d => xScale(d.poverty))
+        .attr("y", d => yScale(d.healthcare)*1.015)
+        .attr("font-size", 8)
         .text(d => d.abbr);
     
     // Axis labels
@@ -91,4 +91,22 @@ d3.csv("assets/data.data.csv").then(function(dataHealth){
         .attr("class", "axisText")
         .attr("font-weight", "bold")
         .text("Lacks Healthcare (%)");
+
+    // Create tooltips
+    var toolTip = d3.tip()
+        .attr("class", "d3-tip")
+        .offset([80,50])
+        .html(function(d){
+            return(`${d.state}<br>Poverty: ${d.poverty}%<br>Healthcare: ${d.healthcare}%`)
+        });
+
+    chartGroup.call(toolTip);
+
+    circlesGroup.on("mouseover", function(d){
+        toolTip.show(d, this);
+    })
+        .on("mouseout", function(d){
+            toolTip.hide(d)
+        });
+
 });
